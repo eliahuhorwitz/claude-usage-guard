@@ -21,8 +21,8 @@ switched on, going past 100% is billed, which is why the guard exists.
 In Claude Code:
 
 ```
-/plugin marketplace add eliahuhorwitz/usage-guard
-/plugin install usage-guard@usage-guard
+/plugin marketplace add eliahuhorwitz/claude-usage-guard
+/plugin install usage-guard@claude-usage-guard
 ```
 
 Then start a new session (or run `/reload-plugins`). Claude Code installs the plugin's one
@@ -42,7 +42,7 @@ At 90% Claude's next tool call is refused and you see:
 
 ```
 Usage guard: Claude Code is paused at 90% (5-hour window at 90% (resets Tue 6 Oct, 16:50)).
-To continue, run:  ! node "/Users/you/.claude/plugins/cache/usage-guard/usage-guard/<version>/src/approve.mjs"
+To continue, run:  ! node "/Users/you/.claude/plugins/cache/claude-usage-guard/usage-guard/<version>/src/approve.mjs"
 ```
 
 Type that line into Claude Code as given. The leading `!` runs it in your shell, outside Claude, so
@@ -91,10 +91,11 @@ Both files survive plugin updates and uninstalls.
 
 ## Update, disable, uninstall
 
-- Update: `/plugin update usage-guard@usage-guard` (or turn on auto-update for the marketplace
-  under `/plugin` → Marketplaces).
-- Disable for a while: `/plugin disable usage-guard@usage-guard`.
-- Uninstall: `/plugin uninstall usage-guard@usage-guard`. Your config and state in
+- Update: `/plugin update usage-guard@claude-usage-guard` (or turn on auto-update for the marketplace
+  under `/plugin` → Marketplaces). The marketplace is the catalog Claude Code installs from: here,
+  this repo's own `.claude-plugin/marketplace.json`, with this one plugin in it.
+- Disable for a while: `/plugin disable usage-guard@claude-usage-guard`.
+- Uninstall: `/plugin uninstall usage-guard@claude-usage-guard`. Your config and state in
   `~/.claude/usage-guard/` stay; delete them yourself if you want.
 
 ## If you installed the earlier, hand-wired version
@@ -115,7 +116,7 @@ npm test
 claude plugin validate .
 ```
 
-To try a checkout in a session without installing it: `claude --plugin-dir /path/to/usage-guard`.
+To try a checkout in a session without installing it: `claude --plugin-dir /path/to/claude-usage-guard`.
 `USAGE_GUARD_FAKE='{"rows":[{"name":"five_hour","used":91,"resets":"2030-01-01T00:00:00Z"}]}'`
 feeds the hook a made-up reading, and `USAGE_GUARD_DIR` moves its state and config, so you can
 watch it pause without touching your own state.

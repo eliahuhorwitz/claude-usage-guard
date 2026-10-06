@@ -1,7 +1,9 @@
 {
-  "name": "usage-guard",
+  "name": "claude-usage-guard",
   "description": "A guard that pauses Claude Code before it uses up your Claude plan.",
-  "owner": { "name": "Eliahu Horwitz" },
+  "owner": {
+    "name": "Eliahu Horwitz"
+  },
   "plugins": [
     {
       "name": "usage-guard",

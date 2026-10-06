@@ -45,11 +45,11 @@ test('below the thresholds the hook prints nothing and exits 0, and keeps the re
 
 test('at a stop the hook denies the call, and the message gives the approve line built from the plugin root', () => {
   const dir = fresh()
-  const r = hook({ dir, fake: reading(91), pluginRoot: '/Users/someone/.claude/plugins/cache/usage-guard/usage-guard/abc123' })
+  const r = hook({ dir, fake: reading(91), pluginRoot: '/Users/someone/.claude/plugins/cache/claude-usage-guard/usage-guard/abc123' })
   assert.equal(r.code, 0)
   assert.equal(r.json.hookSpecificOutput.hookEventName, 'PreToolUse')
   assert.equal(r.json.hookSpecificOutput.permissionDecision, 'deny')
-  const line = '! node "/Users/someone/.claude/plugins/cache/usage-guard/usage-guard/abc123/src/approve.mjs"'
+  const line = '! node "/Users/someone/.claude/plugins/cache/claude-usage-guard/usage-guard/abc123/src/approve.mjs"'
   assert.ok(r.json.hookSpecificOutput.permissionDecisionReason.endsWith(line), r.json.hookSpecificOutput.permissionDecisionReason)
   assert.ok(r.json.systemMessage.endsWith(line), r.json.systemMessage)
 })
