@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { inspect } from 'node:util'
-import { USAGE_URL, accessTokenFrom, fetchUsage, parseUsage, readToken, readUsage, tokenHolder } from '../src/usage.mjs'
+import { USAGE_URL, accessTokenFrom, detailOf, fetchUsage, parseUsage, readToken, readUsage, shapeOf, tokenHolder } from '../src/usage.mjs'
 
 const ACCESS = 'SENTINEL-ACCESS-TOKEN-a1b2c3'
 const REFRESH = 'SENTINEL-REFRESH-TOKEN-z9y8x7'
@@ -167,4 +167,66 @@ test('without a login the reading says so, without throwing', async () => {
   assert.match(r.error, /no Claude login found/)
   const broken = { ...world().deps, execFile: () => { throw new Error('boom') }, readFile: async () => { throw new Error('nope') } }
   assert.match((await readUsage(broken)).error, /no Claude login found/)
+})
+
+test('the shape of an answer names keys and types only, and is given only when asked', async () => {
+  assert.deepEqual(shapeOf({ five_hour: { utilization: 42, resets_at: RESETS }, model_scoped: [{ display_name: 'Fable' }], extra_usage: null, list: [] }), {
+    five_hour: { utilization: 'number', resets_at: 'string' },
+    model_scoped: [{ display_name: 'string' }],
+    extra_usage: 'null',
+    list: [],
+  })
+  const plain = await readUsage(world().deps)
+  assert.equal(plain.shape, undefined)
+  const withShape = await readUsage(world().deps, { shape: true })
+  assert.deepEqual(withShape.rows, plain.rows)
+  assert.deepEqual(withShape.shape.five_hour, { utilization: 'number', resets_at: 'string' })
+  noLeak(withShape, 'a reading with its shape')
+  assert.ok(!JSON.stringify(withShape.shape).includes('42'))
+})
+
+test('the detail lists every window, the limits and the breakdown, with names and percentages but no money', () => {
+  const body = {
+    five_hour: { utilization: 42, resets_at: RESETS, limit_dollars: 100, used_dollars: 42 },
+    code_name: { utilization: 60, resets_at: RESETS, limit_dollars: 50, used_dollars: 30, locked_reason: null },
+    not_a_window: { utilization: 'x' },
+    limits: [{ kind: 'seven_day', group: 'all', percent: 65, severity: 'ok', resets_at: RESETS, scope: null, is_active: true, secret: 'no' }, 'junk'],
+    seven_day_breakdown: { rows: [{ key: 'code_name', display_name: 'Fable', percent: 60, extra: 1 }] },
+  }
+  const d = detailOf(body)
+  assert.deepEqual(d, {
+    windows: [{ key: 'five_hour', utilization: 42, resets_at: RESETS }, { key: 'code_name', utilization: 60, resets_at: RESETS, locked_reason: null }],
+    limits: [{ kind: 'seven_day', group: 'all', percent: 65, severity: 'ok', resets_at: RESETS, scope: null, is_active: true }],
+    breakdown: [{ key: 'code_name', display_name: 'Fable', percent: 60 }],
+  })
+  assert.ok(!JSON.stringify(d).includes('dollars'))
+  assert.deepEqual(detailOf(null), {})
+})
+
+test('with a limits list, the rows come from it: session, weekly, and the per-model weekly limit', () => {
+  const body = {
+    five_hour: { utilization: 21, resets_at: RESETS },
+    seven_day: { utilization: 65, resets_at: RESETS },
+    limits: [
+      { kind: 'session', group: 'session', percent: 21.4, severity: 'normal', resets_at: RESETS, is_active: false },
+      { kind: 'weekly_all', group: 'weekly', percent: 65, severity: 'normal', resets_at: RESETS, is_active: true },
+      { kind: 'weekly_scoped', group: 'weekly', percent: 61, severity: 'normal', resets_at: '2030-01-05T12:00:00+00:00' },
+      { kind: 'weekly_oauth_apps', percent: 3, resets_at: RESETS },
+      { kind: 'bad one', percent: 99, resets_at: RESETS },
+      { kind: 'weekly_cowork', percent: 'x', resets_at: RESETS },
+      null,
+    ],
+    extra_usage: { is_enabled: true },
+  }
+  assert.deepEqual(parseUsage(body), {
+    rows: [
+      { name: 'five_hour', used: 21, resets: RESETS },
+      { name: 'seven_day', used: 65, resets: RESETS },
+      { name: 'seven_day_model', used: 61, resets: '2030-01-05T12:00:00.000Z' },
+      { name: 'weekly_oauth_apps', used: 3, resets: RESETS },
+    ],
+    extraUsage: true,
+  })
+  // An empty or unusable list falls back to the named windows.
+  assert.deepEqual(parseUsage({ ...body, limits: [null, { kind: 'session' }] }).rows.map((r) => r.name), ['five_hour', 'seven_day'])
 })

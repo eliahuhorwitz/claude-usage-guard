@@ -9,7 +9,7 @@ export const CACHE_MS = 60_000
 /** How often to repeat "the usage could not be read". */
 export const ERROR_REPEAT_MS = 10 * 60_000
 
-const NAMES = { five_hour: '5-hour window', seven_day: 'weekly limit', seven_day_opus: 'weekly Opus limit', seven_day_sonnet: 'weekly Sonnet limit' }
+const NAMES = { five_hour: '5-hour window', seven_day: 'weekly limit', seven_day_model: 'weekly model limit', seven_day_opus: 'weekly Opus limit', seven_day_sonnet: 'weekly Sonnet limit' }
 const nameOf = (w) => NAMES[w] ?? w.replace(/^week_/, 'weekly ').replace(/_/g, ' ')
 const when = (iso) => (iso ? new Date(iso).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : 'unknown')
 

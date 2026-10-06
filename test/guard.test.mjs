@@ -41,6 +41,10 @@ test('the weekly limit stops work just like the 5-hour window, and the message n
   const d = decide(usage(row(20), row(91, 'seven_day', '2026-10-08T10:00:00Z')), fresh, T, opts)
   assert.equal(d.allow, false)
   assert.match(d.message, /weekly limit at 91%/)
+  const model = decide(usage(row(20), row(90, 'seven_day_model', '2026-10-08T10:00:00Z')), fresh, T, opts)
+  assert.equal(model.allow, false)
+  assert.match(model.message, /weekly model limit at 90%/)
+  assert.match(decide(usage(row(91, 'weekly_oauth_apps')), fresh, T, opts).message, /weekly oauth apps at 91%/)
 })
 
 test('approving at 90% lets work continue, but 95% stops it again', () => {

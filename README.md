@@ -51,7 +51,9 @@ only you can approve. It approves the windows that are currently stopped, up to 
 reached, until they reset. At 95% the same happens again. Approval is never given in advance: below
 a stop there is nothing to approve.
 
-`/usage-guard:status` shows the current usage, the thresholds and what has been approved.
+`/usage-guard:status` shows the current usage, the thresholds and what has been approved. From your
+shell, `node "<plugin folder>/src/status.mjs" --shape` adds the shape of the endpoint's answer (key
+names and types, no values): useful if the guard ever says it cannot read the usage.
 
 ## Thresholds
 
