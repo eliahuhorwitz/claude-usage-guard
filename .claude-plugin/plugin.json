@@ -1,0 +1,9 @@
+{
+  "name": "usage-guard",
+  "displayName": "Usage Guard",
+  "description": "Stops Claude Code before it uses up your Claude plan: warns at 70%, pauses at 90% and 95% until you approve.",
+  "author": { "name": "Eliahu Horwitz" },
+  "repository": "https://github.com/eliahuhorwitz/usage-guard",
+  "license": "MIT",
+  "keywords": ["usage", "quota", "rate-limit", "hook"]
+}

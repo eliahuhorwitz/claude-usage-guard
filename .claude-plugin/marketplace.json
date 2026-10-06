@@ -1,0 +1,12 @@
+{
+  "name": "usage-guard",
+  "description": "A guard that pauses Claude Code before it uses up your Claude plan.",
+  "owner": { "name": "Eliahu Horwitz" },
+  "plugins": [
+    {
+      "name": "usage-guard",
+      "source": "./",
+      "description": "Warns at 70% of the plan (or when the week runs ahead of pace), pauses every tool call at 90% and 95% until you approve."
+    }
+  ]
+}
