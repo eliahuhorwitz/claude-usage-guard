@@ -25,10 +25,11 @@ In Claude Code:
 /plugin install usage-guard@claude-usage-guard
 ```
 
-Then start a new session (or run `/reload-plugins`). Claude Code installs the plugin's one
-dependency itself. Nothing in your `~/.claude/settings.json` is edited.
+Then start a new session (or run `/reload-plugins`). The plugin has no dependencies, and nothing
+in your `~/.claude/settings.json` is edited.
 
-Requires Claude Code 2.1 or later and Node 20 or later on your `PATH`.
+Requires Claude Code 2.1 or later, Node 18 or later on your `PATH`, and a Claude.ai login (Pro,
+Max or Team). An API-key login has no plan limits, so there is nothing to guard.
 
 ## What you will see
 
@@ -76,9 +77,9 @@ Both files survive plugin updates and uninstalls.
 
 ## How it works, and what it cannot do
 
-- The usage comes from the Claude Agent SDK's usage call, which the SDK marks experimental. The
-  plugin pins the SDK version for that reason. If the call ever breaks, or your login has no plan
-  limits (an API key, for example), **the guard fails open**: work continues and the transcript says
+- The usage comes from the endpoint Claude Code itself asks for `/usage`, with your login's access
+  token. The endpoint is undocumented. If it ever changes, or your login has no plan limits (an API
+  key, for example), **the guard fails open**: work continues and the transcript says
   `Usage guard could not read your plan usage (...). Continuing without it.` Take that line
   seriously: it means the guard is off.
 - Below 80% a reading up to a minute old is reused. From 80% on (ten points below the first stop),
@@ -88,6 +89,30 @@ Both files survive plugin updates and uninstalls.
 - It runs for subagents too, since they make tool calls through the same hook.
 - Claude is told, in the refusal it sees, not to work around the pause and not to run the approve
   script. That is an instruction, not a mechanism; the mechanism is that every tool call is refused.
+
+## Your login token
+
+To read the usage, the hook has to send your Claude login's access token to the usage endpoint,
+the way Claude Code does. This is the one sensitive thing the plugin does, and `src/usage.mjs` is the
+only file that touches the token. What it promises, and what the tests in `test/usage.test.mjs` hold
+it to with a sentinel token:
+
+- The token is read from the macOS keychain item Claude Code keeps (`Claude Code-credentials`,
+  through `/usr/bin/security` by absolute path, with a 3-second timeout), or from
+  `~/.claude/.credentials.json` elsewhere. Only the access token is taken out of that record; the
+  refresh token beside it is never read.
+- The endpoint address is a constant in the code. No setting, config value or environment variable
+  can change it, and the request never follows a redirect, so the token cannot be sent anywhere
+  else.
+- The token appears in exactly one place: the `Authorization` header of that one request. It is
+  kept in a holder that prints as `[redacted]`, so it cannot reach the transcript, a log or
+  `state.json` by accident; the body of a failed answer is never repeated; and an error message
+  is scrubbed of the token before it is shown.
+- Nothing about the token is written to disk. `state.json` holds only percentages, reset times and
+  your approvals.
+
+If you would rather not have a plugin read your token at all, do not install this. The token is a
+necessary part of the design: without it, nothing can read the plan's usage.
 
 ## Update, disable, uninstall
 
@@ -111,7 +136,6 @@ by hand in `~/.claude/settings.json`. After installing the plugin:
 ## Development
 
 ```
-npm ci
 npm test
 claude plugin validate .
 ```
@@ -120,6 +144,9 @@ To try a checkout in a session without installing it: `claude --plugin-dir /path
 `USAGE_GUARD_FAKE='{"rows":[{"name":"five_hour","used":91,"resets":"2030-01-01T00:00:00Z"}]}'`
 feeds the hook a made-up reading, and `USAGE_GUARD_DIR` moves its state and config, so you can
 watch it pause without touching your own state.
+
+`npm test` never reads a real token or calls the real endpoint: the reader takes its keychain, file
+system and network as parameters, and the tests pass in fakes.
 
 Changes land on `main`, and users get them with `/plugin update`: the plugin sets no version, so each
 commit is a version.

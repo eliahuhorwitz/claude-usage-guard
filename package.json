@@ -2,7 +2,11 @@
   "name": "usage-guard",
   "private": true,
   "type": "module",
-  "description": "Stops Claude Code before it uses up your Claude plan: warns at 70%, pauses at 90% and 95% until you approve.",
-  "scripts": { "test": "node --test" },
-  "dependencies": { "@anthropic-ai/claude-agent-sdk": "0.3.287" }
+  "description": "Stops Claude Code before it uses up your Claude plan: warns at 70%, pauses at 90% and 95% until you approve. No dependencies.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
 }
